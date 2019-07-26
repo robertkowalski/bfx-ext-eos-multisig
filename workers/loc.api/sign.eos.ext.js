@@ -27,15 +27,15 @@ class ExtSignEosMultisig extends Api {
       dataRepopulated.transfer.serializedTransaction
     )
 
-    // did we already sign it?
-    const requiredFromUs = getKeysForSign(availableKeys, data)
-    if (requiredFromUs.length === 0) {
-      console.log('skipping already signed tx')
-      return cb(null, { duplicate: true })
-    }
-
     const actionCache = this._getActionCache(des)
     const id = des.actions[0].data
+    const ltx = actionCache.get(id)
+
+    // did we already verify it?
+    if (!ltx) {
+      console.log('tx not cached locally, skipping')
+      return cb(null, { no_cache: true })
+    }
 
     async.waterfall([
       (next) => {
@@ -51,8 +51,6 @@ class ExtSignEosMultisig extends Api {
           }
 
           if (err) return next(err)
-
-          actionCache.set(id, data)
 
           next(null, signed)
         })
